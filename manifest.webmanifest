@@ -1,13 +1,13 @@
 {
-  "name": "DIY Garage - Truck Spec Reference",
-  "short_name": "DIY Garage",
-  "description": "Independent DIY service specs, maintenance and expense tracker for current US Ford vehicles and 1990-present F-150/F-250/F-350. Not affiliated with Ford Motor Company.",
+  "name": "RAM DIY Garage - Truck Spec Reference",
+  "short_name": "RAM Garage",
+  "description": "Independent DIY service specs, maintenance and expense tracker for 1994-present Ram / Dodge Ram trucks and ProMaster vans. Not affiliated with Stellantis / FCA US LLC.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#00095B",
-  "theme_color": "#00095B",
+  "background_color": "#0d0e10",
+  "theme_color": "#0d0e10",
   "icons": [
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]

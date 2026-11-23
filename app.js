@@ -1,10 +1,10 @@
-/* DIY Garage - F-Series (F-150 / F-250 / F-350) reference - application logic */
+/* RAM DIY Garage - Ram / Dodge Ram (1994-present) reference - application logic */
 (() => {
   "use strict";
 
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => Array.from(document.querySelectorAll(s));
-  const LS = "f150fsr.v1";            // kept for backward compatibility with saved data
+  const LS = "ramgarage.v1";          // separate from the Ford app so both can live on one phone
   const MAX_YEAR = new Date().getFullYear() + 1;
 
   // ---------------- state ----------------
@@ -20,14 +20,14 @@
     lastNotified: null
   };
   let S = load();
-  let sel = { model: "F-150", year: null, engine: null, trans: null, drive: "4x2" };
+  let sel = { model: DEFAULT_MODEL, year: null, engine: null, trans: null, drive: "4x2" };
 
   function load() {
     const base = JSON.parse(JSON.stringify(defaults));
     try {
       const d = JSON.parse(localStorage.getItem(LS)) || {};
       const s = Object.assign(base, d, { settings: Object.assign(base.settings, d.settings || {}) });
-      if (s.truck && !s.truck.model) s.truck.model = "F-150";
+      if (s.truck && !s.truck.model) s.truck.model = DEFAULT_MODEL;
       if (!Array.isArray(s.expenses)) s.expenses = [];
       if (!s.intervals || typeof s.intervals !== "object") s.intervals = {};
       // migrate the old single oil-interval setting to a custom oil interval
@@ -60,8 +60,8 @@
   const money = (n) => "$" + Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   // short value for summary tiles
-  const short = (v) => (/confirm/i.test(v || "") ? "See VIN" : String(v || "-").replace("Motorcraft ", "").split(" (")[0]);
-  const truckLabel = (t) => `${t.year} ${t.model || "F-150"}`;
+  const short = (v) => (/confirm/i.test(v || "") ? "See VIN" : String(v || "-").replace("Mopar ", "").split(" (")[0]);
+  const truckLabel = (t) => `${t.year} ${t.model || DEFAULT_MODEL}`;
   const CONFIRM_TXT = "Confirm in Owner's Manual";
   function transFor(y, eng) {
     return eng.trans
@@ -72,7 +72,7 @@
   // ---------------- selector ----------------
   function yearsFor(m) {
     const out = [];
-    for (let y = MAX_YEAR; y >= 1990; y--) if (genFor(y, m) && enginesFor(y, m).length) out.push(y);
+    for (let y = MAX_YEAR; y >= MIN_YEAR; y--) if (genFor(y, m) && enginesFor(y, m).length) out.push(y);
     return out;
   }
   function fillYears() {
@@ -91,7 +91,7 @@
     }));
   }
   function setModel(m) {
-    if (!CATALOG.some((x) => x.id === m)) m = "F-150";
+    if (!CATALOG.some((x) => x.id === m)) m = DEFAULT_MODEL;
     sel.model = m;
     const cat = catOf(m);
     $$("#segCat button").forEach((b) => b.classList.toggle("on", b.dataset.v === cat));
@@ -125,7 +125,7 @@
     const s = $("#selTrans"); s.innerHTML = "";
     const list = transFor(sel.year, engById(sel.engine));
     list.forEach((t) => s.add(new Option(t.name, t.id)));
-    if (!list.some((t) => t.id === sel.trans)) sel.trans = list[0]?.id;
+    if (!list.some((t) => t.id === sel.trans)) sel.trans = (list.find((t) => t.type !== "Manual") || list[0])?.id;   // default to the automatic
     s.value = sel.trans;
   }
   function setDrive(v) {
@@ -141,17 +141,17 @@
     $("#btnSaveTruck").onclick = () => {
       const prev = S.truck;
       S.truck = { ...sel };
-      // a different vehicle -> its own Ford schedule; drop custom intervals
+      // a different vehicle -> its own schedule; drop custom intervals
       const changed = prev && (prev.model !== sel.model || prev.engine !== sel.engine || prev.year !== sel.year);
       const hadCustom = Object.keys(S.intervals || {}).length > 0;
       if (changed && hadCustom) S.intervals = {};
       save(); renderAll();
-      toast(`Saved ${truckLabel(sel)} as your vehicle${changed && hadCustom ? " - custom intervals reset to Ford" : ""}`);
+      toast(`Saved ${truckLabel(sel)} as your vehicle${changed && hadCustom ? " - custom intervals reset to " + BRAND + "'s" : ""}`);
     };
   }
 
   // ---------------- VIN decoder ----------------
-  // Offline checks (format, check digit, model year, Ford WMI) + NHTSA vPIC decode
+  // Offline checks (format, check digit, model year, Dodge / Ram WMI) + NHTSA vPIC decode
   // (free public API, no key). The decoded data is matched to the app's
   // model / year / engine / transmission / drive lists.
   const VIN_W = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
@@ -172,8 +172,9 @@
     const yi = YEAR_CODES.indexOf(vin[9]);
     if (yi >= 0) r.year = (/\d/.test(vin[6]) ? 1980 : 2010) + yi;
     r.wmi = vin.slice(0, 3);
-    r.isFord = /^[123]F/.test(vin) || ["NM0", "1ZV", "WF0", "MAJ"].includes(r.wmi);
-    if (!r.isFord) r.warnings.push(`This doesn't look like a Ford VIN (it starts with ${r.wmi}).`);
+    // Dodge / Ram trucks and vans: 1B7, 3B7, 1D7, 3D7, 1C6, 3C6, 3C7, 2C7 ... ProMaster City: ZFB
+    r.isRam = /^[123][BCD][3-7]/.test(vin) || /^ZFB/.test(vin);
+    if (!r.isRam) r.warnings.push(`This doesn't look like a Dodge / Ram truck or van VIN (it starts with ${r.wmi}).`);
     r.ok = true;
     return r;
   }
@@ -188,18 +189,25 @@
     } finally { clearTimeout(to); }
   }
 
-  function vinModel(n) {
-    const m = String(n.Model || "").trim();
-    const rules = [
-      [/mach-?e/i, "Mustang Mach-E"], [/^mustang/i, "Mustang"],
-      [/bronco sport/i, "Bronco Sport"], [/^bronco/i, "Bronco"],
-      [/^maverick/i, "Maverick"], [/^ranger/i, "Ranger"],
-      [/^explorer/i, "Explorer"], [/^expedition/i, "Expedition"],
-      [/transit connect/i, null], [/transit/i, "Transit"],
-      [/^e-?\d{3}|econoline|e-series/i, "E-Series"],
-      [/f-?150/i, "F-150"], [/f-?250/i, "F-250"], [/f-?350/i, "F-350"]
-    ];
-    for (const [re, id] of rules) if (re.test(m)) return id;
+  // NHTSA returns Make DODGE (to 2010) or RAM (2011+). The truck size is in
+  // Model ("1500", "2500", "ProMaster") or, on older trucks, in Series with Model "Ram".
+  function vinModel(n, vin) {
+    if (!/dodge|ram/i.test(String(n.Make || ""))) return null;
+    const m = `${n.Model || ""} ${n.Series || ""} ${n.Series2 || ""}`.trim();
+    const year = parseInt(n.ModelYear, 10) || 0;
+    const incomplete = /incomplete|chassis cab/i.test(`${n.BodyClass || ""} ${n.VehicleType || ""}`);
+    if (/promaster city/i.test(m)) return "ProMaster City";
+    if (/promaster/i.test(m)) return "ProMaster";
+    if (/[45]500/.test(m)) return "Ram Chassis Cab";
+    if (/classic/i.test(m)) return "Ram 1500 Classic";
+    if (/1500/.test(m)) {
+      // 2019-2024: the old DS body was sold as the "1500 Classic". Its VINs use R in
+      // position 4 (1C6RR...), the new DT uses S (1C6SR...).
+      if (year >= 2019 && year <= 2024 && vin && vin[3] === "R") return "Ram 1500 Classic";
+      return "Ram 1500";
+    }
+    if (/3500/.test(m)) return incomplete && year >= 2008 ? "Ram Chassis Cab" : "Ram 3500";
+    if (/2500/.test(m)) return "Ram 2500";
     return null;
   }
 
@@ -224,23 +232,24 @@
     const nEV = /electric/.test(fuel1) || /bev/.test(el);
     const nHyb = !nEV && (/hev|hybrid/.test(el) || /electric/.test(fuel2) || /hybrid/.test(info));
     const nDsl = /diesel/.test(fuel1 + fuel2);
-    const nTurbo = /yes/i.test(n.Turbo || "") || /gtdi|ecoboost|turbo/.test(info);
-    const nNA = !nTurbo && /ti-?vct|cyclone|\b[234]v\b/.test(info);
+    const nTurbo = /yes/i.test(n.Turbo || "") || /turbo/.test(info);
+    const nNA = !nTurbo && /hemi|vvt|pentastar|magnum/.test(info);
     const label = e.name + " " + e.family;
     const eDisp = parseFloat((e.name.match(/(\d+\.\d)\s*L/) || [])[1]);
-    const eTurbo = !e.isDiesel && /ecoboost|turbo|powerboost/i.test(label);
-    const eHyb = /hybrid|powerboost/i.test(label);
-    const eHO = /h\.o\.|high output|raptor/i.test(e.name);
+    const eTurbo = !e.isDiesel && /turbo|supercharged/i.test(label);
+    const eHyb = /hybrid/i.test(label);
+    const eHO = /\bHO\b|high output|\bRHO\b/i.test(e.name);
 
     if (disp > 0 && !isNaN(eDisp)) s += Math.abs(disp - eDisp) < 0.06 ? 6 : -12;
     if (nEV !== !!e.isEV) s -= 15; else if (nEV) s += 6;
     if (nDsl !== !!e.isDiesel) s -= 10; else if (nDsl) s += 3;
     if (nHyb) s += eHyb ? 5 : -5; else if (eHyb) s -= 3;
     if (!e.isDiesel && !e.isEV) { if (nTurbo) s += eTurbo ? 3 : -4; else if (nNA) s += eTurbo ? -3 : 2; }
-    if (/high output|raptor/.test(info)) s += eHO ? 4 : -2; else if (eHO) s -= 3;
-    const valves = (info.match(/\b([23])v\b/) || [])[1];
-    if (valves) s += new RegExp(valves + "-valve", "i").test(e.name) ? 3 : /[23]-valve/i.test(e.name) ? -3 : 0;
-    if (/dark horse/.test(info)) s += /dark horse/i.test(e.name) ? 4 : -2; else if (/dark horse/i.test(e.name)) s -= 2;
+    if (/high output|\bho\b|\brho\b/.test(info)) s += eHO ? 4 : -2; else if (eHO) s -= 1;
+    const valves = (info.match(/\b(12|24)[ -]?v(alve)?\b/) || [])[1];
+    if (valves) s += new RegExp(valves + "-valve", "i").test(e.name) ? 3 : /(12|24)-valve/i.test(e.name) ? -3 : 0;
+    if (/supercharg|trx|srt/.test(info + trim)) s += /supercharged|srt-10/i.test(e.name) ? 4 : -2; else if (/supercharged|srt-10/i.test(e.name)) s -= 3;
+    if (/etorque|mild hybrid|48v/.test(info)) s += /etorque/i.test(e.name) ? 2 : 0;
     const paren = (e.name.match(/\(([^)]+)\)/) || [])[1];
     if (trim && paren && paren.toLowerCase().split(/[\s\/,]+/).some((w) => w.length > 1 && !/^\d+$|^hp$/.test(w) && new RegExp("\\b" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(trim))) s += 2;
     const hp = parseFloat(n.EngineHP), ehp = parseFloat((e.name.match(/(\d{3})\s*hp/i) || [])[1]);
@@ -264,13 +273,14 @@
     const out = { notes: [], warnings: [] };
     const year = parseInt(n && n.ModelYear, 10) || local.year;
     out.year = year;
-    let model = n ? vinModel(n) : null;
-    // Older F-Series VINs sometimes come back with no model name. Fall back to the
-    // series digits (VIN characters 6-7) on 1990-2010 Ford truck VINs.
-    if (!model && n && !String(n.Model || "").trim() && /^[123]FT/.test(local.vin) && year <= 2010) {
-      const sd = local.vin.slice(5, 7);
-      model = /^1[2-8]$/.test(sd) ? "F-150" : /^2[0-8]$/.test(sd) ? "F-250" : /^3[0-8]$/.test(sd) ? "F-350" : null;
-      if (model) out.notes.push(`NHTSA didn't return a model name. ${model} was worked out from the VIN's series code - check it.`);
+    let model = n ? vinModel(n, local.vin) : null;
+    // Older Dodge Ram VINs often come back as Model "Ram" with no size. On
+    // 1994-2010 Dodge truck VINs (1B7 / 3B7 / 1D7 / 3D7) the 6th character is the
+    // series: 1 = 1500, 2 = 2500, 3 = 3500.
+    if (!model && n && /^[13][BD]7/.test(local.vin) && year <= 2010) {
+      const sd = local.vin[5];
+      model = sd === "1" ? "Ram 1500" : sd === "2" ? "Ram 2500" : sd === "3" ? "Ram 3500" : null;
+      if (model) out.notes.push(`NHTSA didn't return the truck size. ${model} was worked out from the VIN's series code - check it.`);
     }
     if (!model) {
       out.unsupported = n && n.Model ? `${n.Model}` : null;
@@ -301,7 +311,9 @@
     const bits = [];
     if (parseFloat(n.DisplacementL) > 0) bits.push(`${parseFloat(n.DisplacementL).toFixed(1)}L ${cfg}${n.EngineCylinders || ""}`.trim());
     if (/yes/i.test(n.Turbo || "") || /gtdi/i.test(n.EngineModel || "")) bits.push("Turbo");
-    if (n.EngineModel && !/^ford$/i.test(n.EngineModel)) bits.push(n.EngineModel);
+    if (n.EngineModel && !/^(ram|dodge|chrysler)$/i.test(n.EngineModel)) bits.push(n.EngineModel);
+    const sc = (String(n.OtherEngineInfo || "").match(/sales code:?\s*(\w+)/i) || [])[1];
+    if (sc) bits.push("Sales code " + sc);
     const fuel = [n.FuelTypePrimary, n.FuelTypeSecondary].filter(Boolean).join(" / ");
     if (fuel) bits.push(fuel);
     if (/hev|hybrid/i.test(n.ElectrificationLevel || "")) bits.push("Hybrid");
@@ -337,7 +349,7 @@
     } else if (n) {
       match = `<div class="vinmatch"><span class="chip bad">NOT COVERED</span><div class="sub sev">${m && m.unsupported ? esc(m.unsupported) + " isn't" : "This vehicle isn't"} in the app yet. Covered: ${esc(MODELS.join(", "))}.</div></div>`;
     } else if (offline && local.ok) {
-      match = `<div class="vinmatch"><span class="chip warn">OFFLINE</span><div class="sub sev">Couldn't reach NHTSA (no connection?). From the VIN itself: model year ${local.year || "?"}${local.isFord ? ", Ford" : ""}. Pick the rest from the lists below, or try again when you're online.</div></div>`;
+      match = `<div class="vinmatch"><span class="chip warn">OFFLINE</span><div class="sub sev">Couldn't reach NHTSA (no connection?). From the VIN itself: model year ${local.year || "?"}${local.isRam ? ", Dodge / Ram" : ""}. Pick the rest from the lists below, or try again when you're online.</div></div>`;
     }
     const rows = n ? `<table class="spec">
         ${row("Vehicle", `${n.ModelYear || local.year || ""} ${String(n.Make || "").replace(/\b\w+/g, (w) => w[0] + w.slice(1).toLowerCase())} ${n.Model || ""}`.trim())}
@@ -446,7 +458,7 @@
           ${row("Oil capacity (w/ filter)", e.oilCap, { big: true, flag: ev("oilCap") })}
           ${row("Oil viscosity", e.oilVisc, { flag: ev("oilVisc") })}
           ${row("Oil specification", e.oilSpec)}
-          ${row("Oil filter (Motorcraft)", e.filter, { big: true, flag: ev("filter"), copy: true })}
+          ${row("Oil filter", e.filter, { big: true, flag: ev("filter"), copy: true })}
           ${row("Oil pan drain plug torque", e.drainTorque, { flag: ev("drainTorque") })}
         </table>
       </div>`;
@@ -475,7 +487,7 @@
           ${row(e.isEV ? "Energy storage" : "Fuel tank capacity", pick("fuelTank"), { flag: pv("fuelTank") })}
           ${e.isEV || e.isDiesel ? "" : row("Spark plug", e.plug, { big: true, flag: ev("plug"), copy: true })}
           ${e.isEV || e.isDiesel ? "" : row("Spark plug gap", e.gap, { flag: ev("gap") })}
-          ${e.isDiesel ? row("Ignition", "Compression ignition - glow plugs (not a routine DIY item)") : ""}
+          ${e.isDiesel ? row("Ignition", "Compression ignition - " + String(e.plug || "").replace(/^N\/A - diesel\s*/i, "").replace(/^\(|\)$/g, "") || "diesel") : ""}
           ${e.plugMi ? row("Plug replacement", `Every ${fmtMi(e.plugMi)} mi`, { flag: ev("plugMi") }) : ""}
         </table>
       </div>`;
@@ -545,13 +557,13 @@
           ${row("Data confidence", wConf)}
         </table>
         ${w.note || w.alt ? `<p class="hint" style="margin-bottom:12px">${esc([w.note, w.alt].filter(Boolean).join(" "))}</p>` : ""}
-        <p class="hint" style="margin-bottom:12px">Sizes come from blade-maker guides (Rain-X / Bosch / Trico), retailer fitment lists and Motorcraft part listings. If in doubt, measure the old blade tip to tip.</p>`
+        <p class="hint" style="margin-bottom:12px">Sizes come from blade-maker guides (Rain-X / Bosch / Trico) and retailer fitment lists, and haven't been checked for every year. If in doubt, measure the old blade tip to tip.</p>`
           : `<p class="hint" style="margin-bottom:12px">Wiper size not available for this vehicle yet - measure the old blade tip to tip.</p>`}
       </div>`;
     const schedCard = renderSchedule(ctx);
     const prelim = g.preliminary ? `
       <div class="prelim">⚠ <b>PRELIMINARY DATA.</b> Specs for the ${esc(sel.model)} were added recently and are incomplete.
-        Many values say "confirm" - always check your Owner's Manual or do a VIN lookup at motorcraftservice.com.</div>` : "";
+        Many values say "confirm" - always check your Owner's Manual or do a Mopar parts lookup by VIN.</div>` : "";
 
     const notes = [...(e.notes || []), ...(g.notes || [])];
     const notesCard = notes.length ? `
@@ -580,11 +592,11 @@
   const resolve = (v, c) => (typeof v === "function" ? v(c) : v);
 
   function isMyTruck(c) {
-    return S.truck && (S.truck.model || "F-150") === sel.model && S.truck.year === c.year && S.truck.engine === c.eng.id && S.truck.trans === c.trans.id && S.truck.drive === c.drive;
+    return S.truck && (S.truck.model || DEFAULT_MODEL) === sel.model && S.truck.year === c.year && S.truck.engine === c.eng.id && S.truck.trans === c.trans.id && S.truck.drive === c.drive;
   }
 
-  // Interval in effect for one item: the user's custom value, or Ford's
-  // normal / severe value. `logCount` picks Ford's "first" vs "then every".
+  // Interval in effect for one item: the user's custom value, or the
+  // maker's normal / severe value. `logCount` picks "first" vs "then every".
   function effInterval(item, c, logCount) {
     const f = item.ford, cust = (S.intervals || {})[item.id];
     const sevMode = S.schedMode === "severe" && f.s;
@@ -598,9 +610,9 @@
 
   function myCtx() {
     if (!S.truck) return null;
-    const g = genFor(S.truck.year, S.truck.model || "F-150"), e = engById(S.truck.engine), t = trById(S.truck.trans);
+    const g = genFor(S.truck.year, S.truck.model || DEFAULT_MODEL), e = engById(S.truck.engine), t = trById(S.truck.trans);
     if (!g || !e || !t) return null;
-    return { year: S.truck.year, gen: g, eng: e, trans: t, drive: S.truck.drive, model: S.truck.model || "F-150" };
+    return { year: S.truck.year, gen: g, eng: e, trans: t, drive: S.truck.drive, model: S.truck.model || DEFAULT_MODEL };
   }
 
   function scheduleStatus(item, c, mineOverride) {
@@ -630,8 +642,8 @@
       const part = s.part ? resolve(s.part, c) : "";
       const tag = ivl.src === "custom" ? `<span class="itag cust">YOUR INTERVAL</span>` : ivl.sev ? `<span class="itag sev">SEVERE</span>` : "";
       const fordLine = ivl.src === "custom"
-        ? `Ford: ${fmtIv(f.n)}${f.s ? " · severe " + fmtIv(f.s) : ""}`
-        : f.first ? `Ford: first at ${fmtIv(f.first)}, then every ${fmtIv(f.n)}` : f.s && !ivl.sev ? `Severe: ${fmtIv(f.s)}` : ivl.sev ? `Normal: ${fmtIv(f.n)}` : "";
+        ? `${BRAND}: ${fmtIv(f.n)}${f.s ? " · severe " + fmtIv(f.s) : ""}`
+        : f.first ? `${BRAND}: first at ${fmtIv(f.first)}, then every ${fmtIv(f.n)}` : f.s && !ivl.sev ? `Severe: ${fmtIv(f.s)}` : ivl.sev ? `Normal: ${fmtIv(f.n)}` : "";
       let status = "";
       if (mine) {
         if (st.never) status = `<span class="chip">NOT LOGGED</span>`;
@@ -659,11 +671,11 @@
         <div class="seg schedseg" id="segSched">
           <button data-v="normal" class="${sevOn ? "" : "on"}">NORMAL</button><button data-v="severe" class="${sevOn ? "on" : ""}">SEVERE DUTY</button>
         </div>
-        <p class="hint">${sevOn ? esc(SEVERE_DEF) + " Items without a Ford severe interval use the normal one." : "Ford's normal schedule."}
+        <p class="hint">${sevOn ? esc(SEVERE_DEF) + " Items without a severe interval use the normal one." : "Normal-duty schedule."}
           Whichever comes first, miles or months. ${mine ? "Status comes from your Service Log. Change any interval in <b>MY RIDE → Maintenance intervals</b>." : "Tap <b>★ SAVE AS MINE</b> to track these against your Service Log and set your own intervals."}</p>
         <ul class="sched">${rows}</ul>
-        <p class="hint" style="margin-bottom:12px"><b>Labels:</b> FORD MANUAL = taken from the Ford document for this model and year · FORD · NEARBY YEAR = same model, adjacent year ·
-          FORD COMMON SCHEDULE = Ford's standard schedule; this vehicle's manual wasn't checked · NOT A FORD ITEM = Ford doesn't schedule it. Always check your own Owner's Manual or ford.com/support/maintenance-schedule.</p>
+        <p class="hint" style="margin-bottom:12px"><b>Labels:</b> UNVERIFIED = a typical Ram / Chrysler interval that hasn't been checked against your Owner's Manual yet ·
+          NOT A RAM ITEM = Ram doesn't schedule it; typical practice. <b>Always check your own Owner's Manual</b> - on 2009+ trucks, follow the Oil Change Indicator.</p>
       </div>`;
   }
 
@@ -740,7 +752,7 @@
         <div class="bar"><i style="width:${d.dPct}%"></i></div>
       </div>` : ""}
       <div class="s" style="grid-column:1/-1;font-size:11px;color:var(--muted);text-align:center">
-        ${esc(d.type)} · every ${fmtIv(d.ivl)} (${d.ivl.src === "custom" ? "your interval" : d.ivl.sev ? "Ford severe duty" : "Ford normal"}) · last @ ${fmtMi(d.last.miles)} mi on ${fmtDate(d.last.date)}
+        ${esc(d.type)} · every ${fmtIv(d.ivl)} (${d.ivl.src === "custom" ? "your interval" : d.ivl.sev ? "severe duty" : "normal duty"}) · last @ ${fmtMi(d.last.miles)} mi on ${fmtDate(d.last.date)}
       </div>`;
 
     const others = renderUpcoming();
@@ -839,7 +851,7 @@
       : `${d.type} due in ${fmtMi(Math.max(0, d.milesLeft))} mi or ${Math.max(0, d.daysLeft)} days.`;
     try {
       const reg = await navigator.serviceWorker?.getRegistration();
-      const title = `${S.truck.model || "F-150"} Service Reminder`;
+      const title = `${S.truck.model || DEFAULT_MODEL} Service Reminder`;
       if (reg) reg.showNotification(title, { body, icon: "icon.svg", tag: "truck-due" });
       else new Notification(title, { body, icon: "icon.svg" });
     } catch { /* ignore */ }
@@ -852,11 +864,11 @@
     const ymd = (dt) => dt.toISOString().slice(0, 10).replace(/-/g, "");
     const stamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
     const nm = S.name ? ` (${S.name})` : "";
-    const md = S.truck.model || "F-150";
+    const md = S.truck.model || DEFAULT_MODEL;
     const ics = [
-      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//DIY Garage//EN", "CALSCALE:GREGORIAN",
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//RAM DIY Garage//EN", "CALSCALE:GREGORIAN",
       "BEGIN:VEVENT",
-      `UID:truck-${d.last.id}@diygarage`, `DTSTAMP:${stamp}`,
+      `UID:truck-${d.last.id}@ramdiygarage`, `DTSTAMP:${stamp}`,
       `DTSTART;VALUE=DATE:${ymd(d.dueDate)}`,
       `DTEND;VALUE=DATE:${ymd(new Date(d.dueDate.getTime() + 864e5))}`,
       `SUMMARY:${md} ${d.type} due${nm}`,
@@ -1010,11 +1022,11 @@
       const fordTxt = f.first && !logs && !ivl.sev ? `first ${fmtIv(f.first)}, then ${fmtIv(f.n)}` : fmtIv(ivl.ford);
       return `<li data-id="${s.id}">
         <div class="sx-h"><b>${esc(s.type)}</b>${cust ? `<span class="itag cust">YOUR INTERVAL</span>` : `<span class="conf ${f.conf}">${CONF_LABEL[f.conf]}</span>`}</div>
-        <div class="sub">Ford ${ivl.sev ? "severe" : "normal"}: ${esc(fordTxt)}</div>
+        <div class="sub">${BRAND} ${ivl.sev ? "severe" : "normal"}: ${esc(fordTxt)}</div>
         <div class="ivrow">
           <label>MILES<input type="number" inputmode="numeric" min="0" step="500" class="ivmi" value="${cust ? cust.mi || "" : ""}" placeholder="${ivl.ford.mi ? ivl.ford.mi : "-"}"></label>
           <label>MONTHS<input type="number" inputmode="numeric" min="0" class="ivmo" value="${cust ? cust.mo || "" : ""}" placeholder="${ivl.ford.mo ? ivl.ford.mo : "-"}"></label>
-          <button class="btn ghost ivreset" type="button" ${cust ? "" : "disabled"}>FORD</button>
+          <button class="btn ghost ivreset" type="button" ${cust ? "" : "disabled"}>DEFAULT</button>
         </div>
       </li>`;
     }).join("")}</ul>`;
@@ -1028,11 +1040,11 @@
         S.lastNotified = null; save(); renderDue(); renderSpecs(); renderIntervals();
         const f = scheduleFor(c).find((x) => x.id === id);
         const fordMi = f && (S.schedMode === "severe" && f.ford.s ? f.ford.s.mi : f.ford.n.mi);
-        toast(mi && fordMi && mi > fordMi * 1.5 ? `Saved - note that's longer than Ford's ${fmtMi(fordMi)} mi` : mi || mo ? "Interval saved" : "Back to Ford's interval");
+        toast(mi && fordMi && mi > fordMi * 1.5 ? `Saved - note that's longer than the ${fmtMi(fordMi)} mi default` : mi || mo ? "Interval saved" : "Back to the default interval");
       };
       li.querySelector(".ivmi").onchange = commit;
       li.querySelector(".ivmo").onchange = commit;
-      li.querySelector(".ivreset").onclick = () => { delete S.intervals[id]; save(); renderDue(); renderSpecs(); renderIntervals(); toast("Back to Ford's interval"); };
+      li.querySelector(".ivreset").onclick = () => { delete S.intervals[id]; save(); renderDue(); renderSpecs(); renderIntervals(); toast("Back to the default interval"); };
     });
   }
 
@@ -1047,12 +1059,12 @@
     };
     $$("#segMode button").forEach((b) => (b.onclick = () => {
       S.schedMode = b.dataset.v; S.lastNotified = null; save(); renderAll();
-      toast(b.dataset.v === "severe" ? "Using Ford's severe-duty schedule" : "Using Ford's normal schedule");
+      toast(b.dataset.v === "severe" ? "Using the severe-duty schedule" : "Using the normal schedule");
     }));
     $("#btnResetAll").onclick = () => {
-      if (!Object.keys(S.intervals || {}).length) return toast("Already using Ford's intervals");
-      if (!confirm("Reset all your custom intervals to Ford's?")) return;
-      S.intervals = {}; save(); renderAll(); toast("All intervals reset to Ford");
+      if (!Object.keys(S.intervals || {}).length) return toast("Already using the default intervals");
+      if (!confirm("Reset all your custom intervals to the defaults?")) return;
+      S.intervals = {}; save(); renderAll(); toast("All intervals reset to defaults");
     };
     $("#btnWipe").onclick = () => {
       if (!confirm("Erase your vehicle, settings, ALL service history and ALL expenses from this device?")) return;
@@ -1073,8 +1085,8 @@
 
   function init() {
     $("#rev").textContent = "REV " + DATA_VERSION;
-    sel = S.truck ? { model: "F-150", ...S.truck } : { model: "F-150", year: new Date().getFullYear(), engine: null, trans: null, drive: "4x4" };
-    if (sel.year > MAX_YEAR || sel.year < 1990) sel.year = MAX_YEAR - 1;
+    sel = S.truck ? { model: DEFAULT_MODEL, ...S.truck } : { model: DEFAULT_MODEL, year: new Date().getFullYear(), engine: null, trans: null, drive: "4x4" };
+    if (sel.year > MAX_YEAR || sel.year < MIN_YEAR) sel.year = MAX_YEAR - 1;
     setModel(sel.model);
     fillYears(); fillEngines(); fillTrans(); fillDrives();
     renderAll();

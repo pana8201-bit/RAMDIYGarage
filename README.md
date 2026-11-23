@@ -1,65 +1,49 @@
-# DIY Garage - Truck Spec Reference
+# RAM DIY Garage - Truck Spec Reference
 
-A quick-reference app for doing your own work on **current US Ford vehicles**, plus **1990-present F-150, F-250 and F-350** pickups. You choose the category, model, year, engine, transmission and driveline, and it shows:
+A quick-reference app for doing your own work on **1994-present Ram / Dodge Ram trucks and Ram vans**. You choose the model, year, engine, transmission and driveline, and it shows:
 
-- **Engine oil:** capacity, viscosity, Ford spec, oil filter P/N, drain plug torque
-- **Transmission:** fluid type, capacity, drain plug and pan bolt torque
-- **Fuel and ignition:** fuel type (gas / diesel / DEF), tank capacity, spark plug P/N, gap and replacement interval
-- **Filters:** engine air, cabin air and fuel filter P/Ns (including diesel filter / water separator)
-- **Driveline:** front and rear differentials, transfer case, and the power transfer unit (PTU) / rear drive unit (RDU) on AWD crossovers
-- **Chassis:** lug nut torque, bolt pattern, washer fluid, coolant, brake fluid
-- **Wiper blades:** driver, passenger and rear sizes, the arm connector type, the blade styles that fit, and how confident the data is
-- **Maintenance schedule:** Ford's **normal** and **severe-duty** intervals for each owner-serviceable item, including Ford's "first change, then every …" coolant rule. Each item is labelled with its Ford source and how sure it is (see below)
+- **Engine oil:** capacity, viscosity, Chrysler / Mopar spec (MS-6395, MS-10902, MS-12633), oil filter P/N and drain plug torque
+- **Transmission:** fluid type (ATF+4, ZF 8 & 9 Speed ATF, Aisin AS68RC / AS69RC), capacity, drain and pan torque
+- **Fuel and ignition:** fuel type (gas, E85, diesel, DEF), tank capacity, spark plug P/N, gap and interval (16 plugs on a HEMI)
+- **Filters:** engine air, cabin air and fuel filter / water separator
+- **Driveline:** front and rear axles (Chrysler 9.25", AAM 11.5" / 11.8", Dana 44 / 60 / 70 / 80) and the transfer case
+- **Chassis:** lug nut torque, bolt pattern, washer fluid, coolant (green / HOAT / OAT), brake fluid
+- **Wiper blades:** sizes, arm connector type and the blade styles that fit
+- **Maintenance schedule:** normal and severe-duty intervals, including diesel items: fuel/water separator, crankcase vent filter, DEF filter and Cummins valve lash. HD 4x4s also get front-end lubrication.
 
-Coverage:
-- **F-150:** 1990-present, gas, hybrid, 3.0L diesel and Lightning EV
-- **F-250 / F-350:** OBS (1990-97) and Super Duty (1999-present), including the 4.9L I6, 5.8L, 7.5L, 5.4L, 6.8L V10, 6.2L, 7.3L and 6.8L gas engines, and the 7.3L IDI, 7.3L, 6.0L, 6.4L and 6.7L Power Stroke diesels
-- **Current US lineup (current generation only, PRELIMINARY data):** Ranger (2024+), Maverick (2022+), Bronco (2021+), Bronco Sport (2021+), Explorer (2020+), Expedition (2025+), Mustang (2024+), Mustang Mach-E (2021+), Transit / E-Transit (2015+) and E-Series cutaway (2021+)
-- Not included because production has ended: Escape (final MY2026), Edge (2024), F-150 Lightning (2022-2025 is covered under F-150)
+## Coverage
+| Model | Years | Engines |
+|---|---|---|
+| Ram 1500 | 1994-present | 3.9 V6, 5.2 / 5.9 Magnum, 3.7 / 4.7 PowerTech, 5.7 HEMI (all versions), 8.3 V10 SRT-10, 3.6 Pentastar (+ eTorque), 3.0 EcoDiesel Gen 2 / 3, 6.2 Supercharged TRX, 3.0 Hurricane SO / HO |
+| Ram 1500 Classic | 2019-2024 | 3.6 Pentastar, 5.7 HEMI |
+| Ram 2500 / 3500 | 1994-present | 5.9 Magnum, 8.0 V10, 5.7 / 6.4 HEMI, 5.9 Cummins 12-valve / 24-valve / common-rail, 6.7 Cummins (standard and high output) |
+| Ram Chassis Cab 3500 / 4500 / 5500 | 2008-present | 6.7 Cummins, 5.7 / 6.4 HEMI |
+| ProMaster | 2014-present | 3.6 Pentastar, 3.0 EcoDiesel I4, ProMaster EV |
+| ProMaster City | 2015-2022 | 2.4 Tigershark |
 
-VIN decoder:
-- Enter a 17-character VIN and the app works out the model, year, engine, transmission and drive type, then shows the matching specs. "Save as mine" stores the VIN along with the trim, body, GVWR and assembly plant.
-- It checks the format, the check digit (9th character) and the model year offline, then decodes with NHTSA's free public vPIC API (`vpic.nhtsa.dot.gov`, no key needed). The VIN is sent only to NHTSA.
-- NHTSA data can be incomplete, especially for older trucks. When more than one engine fits, or details are missing, the app flags the match as **CHECK ENGINE** or **PARTIAL MATCH** so you can confirm the selections.
+Transmissions: NV3500, NV4500, NV5600, G56, T56, 42RE / 46RE / 47RE / 48RE, 42RLE, 45RFE / 545RFE, 65RFE / 66RFE / 68RFE, Aisin AS68RC / AS69RC, TorqueFlite 8 (8HP70 / 75 / 95), 62TE, 948TE and the ProMaster AMT.
 
-Camera VIN scan (📷 **SCAN VIN WITH CAMERA**):
-- **Door-jamb barcode:** point the phone at the VIN barcode on the driver door-jamb sticker and it scans automatically. Uses the phone's built-in barcode detector when there is one, otherwise ZXing (`zxing.min.js`, bundled). Decoding happens on the phone.
-- **Windshield VIN plate (no barcode):** tap **READ VIN TEXT** and text recognition (Tesseract.js, downloaded once the first time, about 3 MB) reads the VIN. Using the check digit and VIN rules, it fixes common misreads such as O→0, I→1, S→5 and B→8, then tells you to compare the result with the vehicle.
-- **PHOTO:** take or choose a photo instead of using the live camera. Works when camera access is blocked.
-- **LIGHT:** turns on the flashlight on phones that support it.
-- The scanned VIN goes straight into the decoder, which selects the matching vehicle.
-- The camera needs https (GitHub Pages is fine). On iPhone, use Safari or the Home Screen app and allow camera access.
+Van data is thinner than the pickup data and the app marks it **PRELIMINARY**.
 
-Maintenance intervals - sources and customizing (`schedule.js`):
-- Intervals come from these Ford documents (fordservicecontent.com):
-  - **F-Series:** the 2021, 2018 and 2012 F-150 owner's manuals, the 2004/2007 and 2009/2010 Scheduled Maintenance Guides, and the 2020 Super Duty owner's manual.
-  - **Other models:** the 2022 Maverick, 2023 Bronco, 2023/2024 Bronco Sport, 2023/2024 Explorer, 2024 Mustang, 2023 Mustang Mach-E, 2024 Transit / E-Transit and 2024 E-Series owner's manuals.
-  - **Older generation only:** the Ranger and Expedition use their previous-generation manuals (2023 Ranger, 2023/2024 Expedition), because the current-generation 2024+ manuals no longer print the schedule. Ford now points to ford.com/support/maintenance-schedule. The 2024 Ranger manual is used for its oil rule.
-- Model-specific Ford rules are included:
-  - Bronco off-road: front axle and transfer case every 30k / 2 yr.
-  - Bronco Sport: 12,500-mile maximum oil interval in 2023, 10,000 in 2024, and transmission fluid every 30k under severe use.
-  - Explorer: the rear axle and PTU are changed only when the message center asks.
-  - Mustang: track-use oil and rear-axle rules, and the manual-transmission severe interval.
-  - Transit 3.5L PFDi: up to 15,000 miles between oil changes.
-  - E-Series: fixed 10k / 12 month / 700-hour oil changes, rotation every 7,500 mi, plugs and rear axle at 97,500.
-  - Mach-E and E-Transit: rotation every 12 months / 10k, battery coolant and electric-drive fluid.
-- Every item shows how sure it is:
-  - **FORD MANUAL:** read from the Ford document for that exact model and year.
-  - **FORD · NEARBY YEAR:** from the same model's manual for an adjacent year.
-  - **FORD · RELATED MANUAL:** from a related Ford manual (previous generation or another model) because this vehicle's own manual has no schedule table.
-  - **NOT A FORD ITEM:** Ford doesn't schedule it (e.g. a yearly battery test), or no Ford value was found (e.g. pre-1997 trucks).
-- Oil on 2011+ vehicles follows Ford's Intelligent Oil-Life Monitor rule: change when the monitor says so, never more than 1 year / 10,000 mi. The tracker reminds you at that maximum unless you set your own interval.
-- **MY RIDE → Maintenance intervals:** switch between Ford's **Normal** and **Severe duty** schedules. Type your own miles and/or months for any item, or tap **FORD** to go back to Ford's value. Custom intervals drive the reminders, the Service tab and the spec sheet. Saving a different vehicle resets them.
-- The Service tab lists **other maintenance** that is overdue or due soon, based on your log.
+## VIN decoder and camera scan
+- Type a VIN, or tap **📷 SCAN VIN WITH CAMERA** to read the door-jamb barcode or the windshield VIN plate.
+- The app checks the format, check digit and model year on the phone, then decodes the VIN with NHTSA's free public vPIC API. The VIN is sent only to NHTSA.
+- It handles both naming styles NHTSA uses:
+  - **DODGE "Ram" + series 1500** (to 2010).
+  - **RAM "2500"** (2011+).
+- **1500 Classic vs. the new DT:** told apart from the VIN (1C6**R**R… vs. 1C6**S**R…).
+- **Chassis cabs:** recognized from the 4500 / 5500 series or NHTSA's "Incomplete - Chassis Cab" body type.
+- **Tested** against NHTSA's results for 30 real VIN patterns, from a 1995 Dodge Ram 1500 to a 2025 Hurricane Ram 1500. All 30 picked the correct model, year and engine.
 
-Trackers:
-- **Service log:** counts down to the next oil change, shows schedule status for every item, sends reminder notifications and creates calendar (`.ics`) alerts
-- **Expense tracker:** logs mods, maintenance, repairs, parts, tools, tires, accessories and more. Shows totals by period, a category breakdown, mods vs. maintenance spend and lifetime cost per mile, with CSV export. Costs entered on service records are included automatically.
-- **Backup:** JSON export/import of the truck, service history and expenses
+## Trackers
+- **Service log:** next-oil-change gauges (miles and days), status for every schedule item, reminder notifications and calendar (`.ics`) alerts.
+- **Custom intervals:** switch between **Normal** and **Severe duty**, or type your own miles and months for any item. Tap **DEFAULT** to go back to the default.
+- **Expense tracker:** mods, maintenance, repairs, parts, tools and more, with totals by period, cost per mile and CSV export.
+- **Backup:** JSON export / import of the truck, service history and expenses.
 
-It is a static Progressive Web App (plain HTML/CSS/JS, no build step, works offline). All user data stays on the device in `localStorage`.
+All data stays on the phone in `localStorage` under the key `ramgarage.v1`, separate from the Ford DIY Garage app, so both can be installed on one phone.
 
-**Live app:** https://pana8201-bit.github.io/FordDIYGarage/
+**Live app:** https://pana8201-bit.github.io/RAMDIYGarage/
 
 ## Install on your phone
 Open the live link, then:
@@ -70,25 +54,34 @@ Open the live link, then:
 ```
 python -m http.server 8150
 ```
-Then open http://localhost:8150
+Then open http://localhost:8150 (the camera only works on the https site).
 
 ## Files
 | File | Purpose |
 |---|---|
 | `index.html` | Layout / tabs |
-| `styles.css` | Theme |
-| `data.js` | F-150 spec database + maintenance schedule |
-| `data-hd.js` | F-250 / F-350 spec database (loaded after `data.js`) |
-| `data-ford.js` | Current US Ford lineup + vehicle catalog (loaded last) |
+| `styles.css` | Graphite / black / red theme (light and dark mode) |
+| `data.js` | Model catalog, transmissions, shared fluids, service types |
+| `data-1500.js` | Ram 1500 and 1500 Classic generations and engines |
+| `data-hd.js` | Ram 2500 / 3500 and Chassis Cab |
+| `data-van.js` | ProMaster / ProMaster City / ProMaster EV |
+| `schedule.js` | Maintenance schedule (normal / severe) and wiper blade data |
 | `app.js` | Selector, VIN decoder, spec sheet, service tracker, expenses, reminders |
-| `schedule.js` | Ford maintenance schedule (normal/severe, sources, confidence) + wiper blade data |
-| `vin-scan.js` | Camera / photo VIN scanner (barcode + text recognition) |
+| `vin-scan.js` | Camera / photo VIN scanner (barcode and text recognition) |
 | `zxing.min.js` | ZXing barcode library (Apache-2.0) - see `THIRD-PARTY-NOTICES.md` |
 | `sw.js` | Offline cache (network-first). **Bump `CACHE` on each release.** |
 | `manifest.webmanifest`, `icon.svg` | PWA install metadata |
 
-## Data accuracy
-Values were compiled as reference data and have **not** been checked against official sources. Fields that vary by build date, axle or calibration appear with a **VERIFY** tag. Part numbers we're not confident about read "confirm P/N by VIN" instead of being guessed. Super Duty specs vary a lot by SRW/DRW, axle and wheelbase, so check the axle tag and Owner's Manual. Before final torque, always confirm against the Owner's Manual, oil-fill cap, a VIN lookup on motorcraftservice.com, or a dealer. Everything in `data-ford.js` is marked **preliminary** in the app: many values deliberately say "confirm" and are waiting to be filled in from Owner's Manuals. To correct a value, edit `data.js` / `data-hd.js` / `data-ford.js` and bump `DATA_VERSION` and the `CACHE` name in `sw.js`.
+## Data accuracy - please read
+These specs are compiled reference data and **have not been checked against official Ram / Mopar service information**.
+- **VERIFY tags:** values that are less certain, or vary by build date, axle or calibration, carry a **VERIFY** tag.
+- **Part numbers:** where we weren't confident, part numbers read "confirm P/N by VIN" instead of being guessed.
+- **Maintenance intervals:** every interval is labelled **UNVERIFIED** until it's checked against the Owner's Manual for that year. On 2009+ trucks, follow the Oil Change Indicator.
+- **Heavy-duty trucks:** HD and chassis-cab specs vary a lot by SRW / DRW, axle and wheelbase, so read the axle tag.
+
+Before final torque, always confirm against the Owner's Manual, the oil-fill cap and axle tag, a Mopar parts lookup by VIN, or a Ram dealer.
+
+To correct a value, edit the data file, then bump `DATA_VERSION` in `data.js` and `CACHE` in `sw.js`.
 
 ## Disclaimer
-This is an independent project. It is **not affiliated with, endorsed by, or sponsored by Ford Motor Company.** Ford, F-150, F-250, F-350, Super Duty, Ranger, Maverick, Bronco, Bronco Sport, Explorer, Expedition, Mustang, Mustang Mach-E, Transit, E-Transit, E-Series, Motorcraft, EcoBoost, PowerBoost, Power Stroke, TorqShift, Raptor, Tremor and Lightning are trademarks of their respective owners and appear here only to identify compatible vehicles and parts. The software is provided "as is" with no warranty, and you perform all work at your own risk.
+This is an independent project. It is **not affiliated with, endorsed by, or sponsored by Stellantis N.V., FCA US LLC, Ram Trucks, Dodge or Cummins Inc.** Ram, Dodge, Mopar, HEMI, ProMaster, ProMaster City, TorqueFlite, EcoDiesel, Pentastar, Hurricane, eTorque, TRX, Power Wagon and Cummins are trademarks of their respective owners and appear here only to identify compatible vehicles and parts. The software is provided "as is" with no warranty, and you perform all work at your own risk.

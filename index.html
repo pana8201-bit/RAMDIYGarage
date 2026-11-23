@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#00095B">
+  <meta name="theme-color" content="#0d0e10">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="DIY Garage">
-  <meta name="description" content="Independent DIY service reference, maintenance and expense tracker for current Ford vehicles and 1990-present F-150, F-250 and F-350 pickups.">
-  <title>DIY Garage - Ford Spec Reference</title>
+  <meta name="apple-mobile-web-app-title" content="RAM Garage">
+  <meta name="description" content="Independent DIY service reference, maintenance and expense tracker for 1994-present Ram / Dodge Ram 1500, 2500, 3500, Chassis Cab and ProMaster.">
+  <title>RAM DIY Garage - Truck Spec Reference</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
@@ -17,12 +17,12 @@
 <body>
   <header class="topbar">
     <div class="badge" aria-hidden="true">
-      <svg viewBox="0 0 48 48"><polygon points="24,3 42,13.5 42,34.5 24,45 6,34.5 6,13.5" fill="#0a1a7a" stroke="#c9d3e6" stroke-width="2.5"/>
-        <circle cx="24" cy="24" r="8" fill="none" stroke="#2D96CD" stroke-width="3"/></svg>
+      <svg viewBox="0 0 48 48"><polygon points="24,3 42,13.5 42,34.5 24,45 6,34.5 6,13.5" fill="#2a2d31" stroke="#c9ced4" stroke-width="2.5"/>
+        <circle cx="24" cy="24" r="8" fill="none" stroke="#c8102e" stroke-width="3.5"/></svg>
     </div>
     <div class="titleblock">
-      <div class="t1">DIY GARAGE · SPEC REFERENCE</div>
-      <div class="t2">DOC FSR-FORD-US · <span id="rev"></span></div>
+      <div class="t1">RAM DIY GARAGE · SPEC REFERENCE</div>
+      <div class="t2">DOC HDS-RAM-US · <span id="rev"></span></div>
     </div>
     <div class="odo" id="odoChip" title="Current odometer">--- mi</div>
   </header>
@@ -66,14 +66,13 @@
       <div id="specOut"></div>
 
       <p class="disclaimer">
-        ⚠ Values are reference data compiled from Ford Owner's Manual / Workshop Manual and Motorcraft
-        application data. Items tagged <b class="vtag">VERIFY</b> vary by build date or calibration.
-        Always confirm with your Owner's Manual, oil-fill cap, VIN lookup at motorcraftservice.com, or a Ford dealer
+        ⚠ Values are compiled reference data and have <b>not</b> been checked against official Ram / Mopar service information.
+        Items tagged <b class="vtag">VERIFY</b> are less certain or vary by build date, axle or calibration.
+        Always confirm with your Owner's Manual, the oil-fill cap and axle tag, a Mopar parts lookup by VIN, or a Ram dealer
         before final torque. Use a calibrated torque wrench.
         <br><br>
-        <b>Independent project. Not affiliated with, endorsed by, or sponsored by Ford Motor Company.</b>
-        Ford, F-150, F-250, F-350, Super Duty, Ranger, Maverick, Bronco, Bronco Sport, Explorer, Expedition, Mustang, Mustang Mach-E,
-        Transit, E-Transit, E-Series, Motorcraft, EcoBoost, PowerBoost, Power Stroke, TorqShift, Raptor, Tremor and Lightning are trademarks of their
+        <b>Independent project. Not affiliated with, endorsed by, or sponsored by Stellantis N.V., FCA US LLC, Ram Trucks, Dodge or Cummins Inc.</b>
+        Ram, Dodge, Mopar, HEMI, ProMaster, ProMaster City, TorqueFlite, EcoDiesel, Pentastar, Hurricane, eTorque, TRX, Power Wagon and Cummins are trademarks of their
         owners and appear here only to identify compatible vehicles and parts. Provided "as is" with no warranty.
         You perform all work at your own risk.
       </p>
@@ -112,7 +111,7 @@
             <label>MILEAGE<input type="number" id="logMiles" inputmode="numeric" required></label>
             <label>COST ($)<input type="number" id="logCost" step="0.01" inputmode="decimal"></label>
           </div>
-          <label>PARTS / OIL USED / NOTES<textarea id="logNotes" rows="2" placeholder="Motorcraft FL-500S, 6 qt 5W-30 Full Synthetic"></textarea></label>
+          <label>PARTS / OIL USED / NOTES<textarea id="logNotes" rows="2" placeholder="Mopar MO-349, 7 qt 5W-20 Full Synthetic"></textarea></label>
           <button class="btn full" type="submit">+ RECORD SERVICE</button>
         </form>
       </div>
@@ -180,8 +179,8 @@
         <div class="card-h"><span class="sec">SEC 20</span> MY VEHICLE</div>
         <div id="myTruck"></div>
         <div class="grid2">
-          <label>NICKNAME<input type="text" id="setName" placeholder="Old Blue"></label>
-          <label>VIN (OPTIONAL)<input type="text" id="setVin" maxlength="17" placeholder="1FTFW1E..." autocapitalize="characters" spellcheck="false"></label>
+          <label>NICKNAME<input type="text" id="setName" placeholder="Big Red"></label>
+          <label>VIN (OPTIONAL)<input type="text" id="setVin" maxlength="17" placeholder="1C6SRFFT..." autocapitalize="characters" spellcheck="false"></label>
         </div>
         <div class="row-btns" style="margin-top:12px">
           <button class="btn ghost" id="btnDecodeSaved" type="button">DECODE THIS VIN</button>
@@ -195,14 +194,14 @@
       </div>
       <div class="card">
         <div class="card-h"><span class="sec">SEC 21</span> MAINTENANCE INTERVALS</div>
-        <p class="hint">These start at Ford's schedule for your vehicle. Choose <b>SEVERE DUTY</b> if you tow, idle a lot, drive on dusty or off-road roads,
+        <p class="hint">These start at typical Ram intervals for your vehicle (not yet checked against your Owner's Manual - see the labels). Choose <b>SEVERE DUTY</b> if you tow, idle a lot, drive on dusty or off-road roads,
           make short trips in freezing weather, or drive in extreme heat. To use your own interval, type miles and/or months
-          (whichever comes first). Clear both boxes or tap <b>FORD</b> to go back to Ford's interval.</p>
+          (whichever comes first). Clear both boxes or tap <b>DEFAULT</b> to go back to the default interval.</p>
         <label>SCHEDULE
           <div class="seg" id="segMode"><button data-v="normal" class="on">NORMAL</button><button data-v="severe">SEVERE DUTY</button></div>
         </label>
         <div id="ivList"></div>
-        <button class="btn ghost full" id="btnResetAll" type="button">RESET ALL TO FORD</button>
+        <button class="btn ghost full" id="btnResetAll" type="button">RESET ALL TO DEFAULTS</button>
       </div>
       <div class="card">
         <div class="card-h"><span class="sec">SEC 22</span> DATA</div>
@@ -224,8 +223,9 @@
   <script src="zxing.min.js" charset="utf-8"></script>
   <script src="vin-scan.js" charset="utf-8"></script>
   <script src="data.js"></script>
+  <script src="data-1500.js"></script>
   <script src="data-hd.js"></script>
-  <script src="data-ford.js"></script>
+  <script src="data-van.js"></script>
   <script src="schedule.js"></script>
   <script src="app.js"></script>
 </body>
