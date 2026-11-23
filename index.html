@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#00095B">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DIY Garage">
+  <meta name="description" content="Independent DIY service reference, maintenance and expense tracker for current Ford vehicles and 1990-present F-150, F-250 and F-350 pickups.">
+  <title>DIY Garage - Ford Spec Reference</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="badge" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><polygon points="24,3 42,13.5 42,34.5 24,45 6,34.5 6,13.5" fill="#0a1a7a" stroke="#c9d3e6" stroke-width="2.5"/>
+        <circle cx="24" cy="24" r="8" fill="none" stroke="#2D96CD" stroke-width="3"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="t1">DIY GARAGE · SPEC REFERENCE</div>
+      <div class="t2">DOC FSR-FORD-US · <span id="rev"></span></div>
+    </div>
+    <div class="odo" id="odoChip" title="Current odometer">--- mi</div>
+  </header>
+
+  <div id="dueBanner" class="banner hidden"></div>
+
+  <main>
+    <!-- ================= SPECS TAB ================= -->
+    <section id="tab-specs" class="tab active">
+      <div class="card selector">
+        <div class="card-h"><span class="sec">SEC 01</span> VEHICLE CONFIGURATION</div>
+        <label>DECODE A VIN (OPTIONAL)
+          <div class="vinrow">
+            <input type="text" id="vinInput" maxlength="17" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                   placeholder="17-character VIN" aria-label="VIN">
+            <button class="btn" id="btnVin" type="button">DECODE</button>
+          </div>
+        </label>
+        <button class="btn ghost full scanbtn" id="btnScan" type="button">📷 SCAN VIN WITH CAMERA</button>
+        <p class="hint" style="margin-top:4px">The VIN is on the driver-side dash (seen through the windshield), the driver door-jamb sticker, and your registration and insurance cards.</p>
+        <div id="vinOut"></div>
+        <div class="or"><span>OR CHOOSE MANUALLY</span></div>
+        <label>CATEGORY
+          <div class="seg" id="segCat"></div>
+        </label>
+        <label>MODEL<select id="selModel"></select></label>
+        <div class="grid3">
+          <label>MODEL YEAR<select id="selYear"></select></label>
+          <label>ENGINE<select id="selEngine"></select></label>
+          <label>TRANSMISSION<select id="selTrans"></select></label>
+        </div>
+        <div class="grid2">
+          <label>DRIVELINE
+            <div class="seg" id="segDrive"></div>
+          </label>
+          <label>&nbsp;<button class="btn ghost" id="btnSaveTruck">★ SAVE AS MINE</button></label>
+        </div>
+        <div class="genline" id="genLine"></div>
+      </div>
+
+      <div id="specOut"></div>
+
+      <p class="disclaimer">
+        ⚠ Values are reference data compiled from Ford Owner's Manual / Workshop Manual and Motorcraft
+        application data. Items tagged <b class="vtag">VERIFY</b> vary by build date or calibration.
+        Always confirm with your Owner's Manual, oil-fill cap, VIN lookup at motorcraftservice.com, or a Ford dealer
+        before final torque. Use a calibrated torque wrench.
+        <br><br>
+        <b>Independent project. Not affiliated with, endorsed by, or sponsored by Ford Motor Company.</b>
+        Ford, F-150, F-250, F-350, Super Duty, Ranger, Maverick, Bronco, Bronco Sport, Explorer, Expedition, Mustang, Mustang Mach-E,
+        Transit, E-Transit, E-Series, Motorcraft, EcoBoost, PowerBoost, Power Stroke, TorqShift, Raptor, Tremor and Lightning are trademarks of their
+        owners and appear here only to identify compatible vehicles and parts. Provided "as is" with no warranty.
+        You perform all work at your own risk.
+      </p>
+    </section>
+
+    <!-- ================= SERVICE LOG TAB ================= -->
+    <section id="tab-log" class="tab">
+      <div class="card">
+        <div class="card-h"><span class="sec">SEC 10</span> NEXT SERVICE DUE</div>
+        <div id="nextDue" class="nextdue"></div>
+        <div class="row-btns">
+          <button class="btn" id="btnNotify">🔔 ENABLE REMINDERS</button>
+          <button class="btn ghost" id="btnIcs">📅 ADD TO CALENDAR</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="sec">SEC 10B</span> OTHER MAINTENANCE</div>
+        <div id="upcoming"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="sec">SEC 11</span> UPDATE ODOMETER</div>
+        <div class="grid2">
+          <label>CURRENT MILEAGE<input type="number" id="odoInput" inputmode="numeric" placeholder="e.g. 84250"></label>
+          <label>&nbsp;<button class="btn" id="btnOdo">UPDATE</button></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="sec">SEC 12</span> LOG A SERVICE</div>
+        <form id="logForm">
+          <div class="grid2">
+            <label>SERVICE<select id="logType"></select></label>
+            <label>DATE<input type="date" id="logDate" required></label>
+            <label>MILEAGE<input type="number" id="logMiles" inputmode="numeric" required></label>
+            <label>COST ($)<input type="number" id="logCost" step="0.01" inputmode="decimal"></label>
+          </div>
+          <label>PARTS / OIL USED / NOTES<textarea id="logNotes" rows="2" placeholder="Motorcraft FL-500S, 6 qt 5W-30 Full Synthetic"></textarea></label>
+          <button class="btn full" type="submit">+ RECORD SERVICE</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="sec">SEC 13</span> SERVICE HISTORY
+          <span class="right"><button class="link" id="btnExport">EXPORT</button> · <label class="link">IMPORT<input type="file" id="fileImport" accept=".json" hidden></label></span>
+        </div>
+        <div id="history"></div>
+      </div>
+    </section>
+
+    <!-- ================= EXPENSES TAB ================= -->
+    <section id="tab-exp" class="tab">
+      <div class="card">
+        <div class="card-h"><span class="sec">SEC 30</span> SPENDING SUMMARY
+          <span class="right"><button class="link" id="btnExpCsv">EXPORT CSV</button></span>
+        </div>
+        <label>PERIOD
+          <select id="expPeriod">
+            <option value="all">All time</option>
+            <option value="ytd">This year</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last 12 months</option>
+          </select>
+        </label>
+        <div class="hero" id="expKpis"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="sec">SEC 31</span> BY CATEGORY</div>
+        <div id="expBreakdown"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="sec">SEC 32</span> ADD AN EXPENSE</div>
+        <form id="expForm">
+          <div class="grid2">
+            <label>CATEGORY<select id="expCat"></select></label>
+            <label>AMOUNT ($)<input type="number" id="expAmt" step="0.01" min="0" inputmode="decimal" required></label>
+            <label>DATE<input type="date" id="expDate" required></label>
+            <label>MILEAGE (OPTIONAL)<input type="number" id="expMiles" inputmode="numeric"></label>
+          </div>
+          <label>DESCRIPTION<input type="text" id="expDesc" placeholder="e.g. 2&quot; leveling kit, LED headlights, brake pads" required></label>
+          <label>VENDOR / STORE<input type="text" id="expVendor" placeholder="e.g. AutoZone, dealer, Amazon"></label>
+          <label>NOTES<textarea id="expNotes" rows="2" placeholder="Part numbers, warranty info, install notes"></textarea></label>
+          <button class="btn full" type="submit">+ RECORD EXPENSE</button>
+        </form>
+        <p class="hint">Costs you enter on a Service Log record are included here automatically as <b>Maintenance</b>, so you don't need to enter them twice.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="sec">SEC 33</span> EXPENSE HISTORY</div>
+        <label>SHOW
+          <select id="expFilterCat"><option value="all">All categories</option></select>
+        </label>
+        <div id="expList"></div>
+      </div>
+    </section>
+
+    <!-- ================= SETTINGS TAB ================= -->
+    <section id="tab-truck" class="tab">
+      <div class="card">
+        <div class="card-h"><span class="sec">SEC 20</span> MY VEHICLE</div>
+        <div id="myTruck"></div>
+        <div class="grid2">
+          <label>NICKNAME<input type="text" id="setName" placeholder="Old Blue"></label>
+          <label>VIN (OPTIONAL)<input type="text" id="setVin" maxlength="17" placeholder="1FTFW1E..." autocapitalize="characters" spellcheck="false"></label>
+        </div>
+        <div class="row-btns" style="margin-top:12px">
+          <button class="btn ghost" id="btnDecodeSaved" type="button">DECODE THIS VIN</button>
+          <button class="btn ghost" id="btnScanSaved" type="button">📷 SCAN VIN</button>
+        </div>
+      </div>
+        <div class="grid2">
+          <label>REMIND ME EARLY (MILES)<input type="number" id="setWarn" inputmode="numeric" value="500"></label>
+          <label>&nbsp;<button class="btn" id="btnSaveSettings">SAVE</button></label>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="sec">SEC 21</span> MAINTENANCE INTERVALS</div>
+        <p class="hint">These start at Ford's schedule for your vehicle. Choose <b>SEVERE DUTY</b> if you tow, idle a lot, drive on dusty or off-road roads,
+          make short trips in freezing weather, or drive in extreme heat. To use your own interval, type miles and/or months
+          (whichever comes first). Clear both boxes or tap <b>FORD</b> to go back to Ford's interval.</p>
+        <label>SCHEDULE
+          <div class="seg" id="segMode"><button data-v="normal" class="on">NORMAL</button><button data-v="severe">SEVERE DUTY</button></div>
+        </label>
+        <div id="ivList"></div>
+        <button class="btn ghost full" id="btnResetAll" type="button">RESET ALL TO FORD</button>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="sec">SEC 22</span> DATA</div>
+        <p class="hint">All data is stored on this device only (no account and nothing sent to the cloud). Use Export in the Service Log to back up your truck, service history and expenses together.</p>
+        <button class="btn danger full" id="btnWipe">ERASE ALL LOCAL DATA</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button data-tab="specs" class="on"><span>⚙</span>SPECS</button>
+    <button data-tab="log"><span>🛢</span>SERVICE</button>
+    <button data-tab="exp"><span>$</span>EXPENSES</button>
+    <button data-tab="truck"><span>🛻</span>MY RIDE</button>
+  </nav>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="zxing.min.js" charset="utf-8"></script>
+  <script src="vin-scan.js" charset="utf-8"></script>
+  <script src="data.js"></script>
+  <script src="data-hd.js"></script>
+  <script src="data-ford.js"></script>
+  <script src="schedule.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
